@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -9,7 +8,7 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:share/share.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sketching_app/brushize_dialog.dart';
 import 'package:sketching_app/draw_point.dart';
 import 'package:sketching_app/sketch_canvas.dart';
@@ -24,11 +23,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
 //List of points
   List<DrawPoint> _drawPoints = [];
+
 // Color Picker
   Color pickerColor = Color(0xff443a49);
   Color currentColor = Color(0xff443a49);
 
   double _brushSize = 5;
+
 //Screenshot
   Uint8List _imageFile;
   ScreenshotController screenshotController = ScreenshotController();
@@ -37,15 +38,19 @@ class _HomePageState extends State<HomePage> {
     setState(() => pickerColor = color);
   }
 
-  void _changeBrushSize() async{
-    double selectedSize = await showDialog(context: context, builder:(context)=> BrushSize(initialSize: _brushSize,));
+  void _changeBrushSize() async {
+    double selectedSize = await showDialog(
+        context: context,
+        builder: (context) => BrushSize(
+              initialSize: _brushSize,
+            ));
 
-    if(selectedSize != null){
+    if (selectedSize != null) {
       _brushSize = selectedSize;
     }
   }
 
-  void _showColorPicker(){
+  void _showColorPicker() {
     showDialog(
       builder: (context) => AlertDialog(
         title: const Text('Pick a color!'),
@@ -54,7 +59,6 @@ class _HomePageState extends State<HomePage> {
             pickerColor: pickerColor,
             onColorChanged: changeColor,
           ),
-
         ),
         actions: <Widget>[
           ElevatedButton(
@@ -65,7 +69,8 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ],
-      ), context: context,
+      ),
+      context: context,
     );
   }
 
@@ -126,14 +131,15 @@ class _HomePageState extends State<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     GestureDetector(
-                      onTap: (){
+                      onTap: () {
                         _showColorPicker();
                       },
-                      child: Container(width: 20,
+                      child: Container(
+                        width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                            color: currentColor, shape: BoxShape.circle),),
-
+                            color: currentColor, shape: BoxShape.circle),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -141,39 +147,65 @@ class _HomePageState extends State<HomePage> {
                       },
                       child: Text("Brush Size"),
                     ),
-                    TextButton(onPressed: () async {
-                      var storagePermission = await Permission.storage.request();
-                      if(storagePermission.isGranted){
-                        screenshotController.capture().then((Uint8List image) async{
-                          //Capture Done
-                          setState(() {
-                            _imageFile = image;
-                          });
-                          print('Screenshot taken');
-                          if (image != null) {
-                            final result = await ImageGallerySaver.saveImage(
-                                Uint8List.fromList(image),
-                                quality: 60,
-                                name: "hello");
-                            print("File: $result");
-                            /*final directory = await getApplicationDocumentsDirectory();
+                    TextButton(
+                        onPressed: () async {
+                          var storagePermission =
+                              await Permission.storage.request();
+                          if (storagePermission.isGranted) {
+                            screenshotController
+                                .capture()
+                                .then((Uint8List image) async {
+                              //Capture Done
+                              setState(() {
+                                _imageFile = image;
+                              });
+                              print('Screenshot taken');
+                              if (image != null) {
+                                final result =
+                                    await ImageGallerySaver.saveImage(
+                                        Uint8List.fromList(image),
+                                        quality: 60,
+                                        name: "sketch_draw");
+                                print("File: $result");
+                                /*final directory = await getApplicationDocumentsDirectory();
                             final imagePath = await File('${directory.path}image.png').create();
                             // await imagePath.writeAsBytes(image);
 
                             /// Share Plugin
                             await Share.shareFiles([imagePath.path]);*/
+                              }
+                            }).catchError((onError) {
+                              print(onError);
+                            });
+                          } else {
+                            Permission.storage.request();
                           }
-                        }).catchError((onError) {
-                          print(onError);
-                        });
-                      }else{
-                        Permission.storage.request();
-                      }
-                    }, child: Text("Save")),
-                    TextButton(onPressed: () {
-                      _drawPoints.clear();
-                    }, child: Text("Clear")
-                    )
+                        },
+                        child: Text("Save")),
+                    TextButton(
+                        onPressed: () async {
+                          screenshotController
+                              .capture()
+                              .then((Uint8List image) async {
+                            final directory =
+                                await getApplicationDocumentsDirectory();
+                            final imagePath =
+                                await File('${directory.path}/sketch_draw.jpg')
+                                    .create();
+                            await imagePath.writeAsBytes(image);
+                            final share = await Share.shareFiles(
+                                [imagePath.path],
+                                text: "My art: ");
+                          });
+                        },
+                        child: Text("Share")),
+                    TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _drawPoints.clear();
+                          });
+                        },
+                        child: Text("Clear"))
                   ],
                 ),
               ))

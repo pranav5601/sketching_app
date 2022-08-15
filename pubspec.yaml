@@ -37,7 +37,7 @@ dependencies:
   permission_handler: ^5.0.1+1
   #1.6.22
   path_provider: ^1.6.22
-  share: ^2.0.4
+  share_plus: ^2.0.0
 
 dev_dependencies:
   flutter_test:
